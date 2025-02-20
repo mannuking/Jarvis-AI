@@ -1,0 +1,46 @@
+{
+  "chrome": [
+    "google chrome",
+    "google",
+    "browser"
+  ],
+  "whatsapp": [
+    "whatsapp messenger",
+    "whatsapp desktop"
+  ],
+  "vscode": [
+    "visual studio code",
+    "vs code",
+    "code"
+  ],
+  "word": [
+    "microsoft word",
+    "ms word",
+    "winword"
+  ],
+  "excel": [
+    "microsoft excel",
+    "ms excel"
+  ],
+  "powerpoint": [
+    "microsoft powerpoint",
+    "ms powerpoint",
+    "ppt"
+  ],
+  "notepad": [
+    "notes",
+    "text editor"
+  ],
+  "cmd": [
+    "command prompt",
+    "terminal",
+    "command line"
+  ],
+  "calculator": [
+    "calc"
+  ],
+  "task manager": [
+    "taskman",
+    "tasks"
+  ]
+}

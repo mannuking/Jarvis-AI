@@ -13,8 +13,9 @@ PASSWORD = os.environ.get("PASSWORD")
 IP_ADDR_API_URL = os.environ.get("IP_ADDR_API_URL")
 NEWS_FETCH_API_URL = os.environ.get("NEWS_FETCH_API_URL")
 NEWS_FETCH_API_KEY = os.environ.get("NEWS_FETCH_API_KEY")
-WEATHER_FORECAST_API_URL = os.environ.get("WEATHER_FORECAST_API_URL")
-WEATHER_FORECAST_API_KEY = os.environ.get("WEATHER_FORECAST_API_KEY")
+# Weather API constants
+WEATHER_FORECAST_API_URL = "https://api.openweathermap.org/data/2.5/weather"
+WEATHER_FORECAST_API_KEY = "your_api_key_here"  # Make sure this is set correctly
 GEMINI_API_KEY=os.environ.get("GEMINI_API_KEY")
 
 

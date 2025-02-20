@@ -88,15 +88,32 @@ def get_news():
 
 
 def weather_forecast(city):
-    res = requests.get(
-        WEATHER_FORECAST_API_URL,
-        params={
-            "q":city,
-            "appid":WEATHER_FORECAST_API_KEY,
-            "units":"metric"
-        },
-        ).json()
-    weather = res["weather"][0]["main"]
-    temp = res["main"]["temp"]
-    feels_like = res["main"]["feels_like"]
-    return weather, f"{temp}°C", f"{feels_like}°C"
+    try:
+        print(f"Making API request for city: {city}")  # Debug print
+        res = requests.get(
+            WEATHER_FORECAST_API_URL,
+            params={
+                "q": city,
+                "appid": WEATHER_FORECAST_API_KEY,
+                "units": "metric"
+            }
+        )
+        
+        print(f"API Response status code: {res.status_code}")  # Debug print
+        
+        if res.status_code != 200:
+            print(f"API Error response: {res.text}")  # Debug print
+            raise Exception(f"Weather API returned status code {res.status_code}")
+            
+        data = res.json()
+        print(f"API Response data: {data}")  # Debug print
+        
+        weather = data["weather"][0]["main"]
+        temp = data["main"]["temp"]
+        feels_like = data["main"]["feels_like"]
+        
+        return weather, f"{temp}°C", f"{feels_like}°C"
+        
+    except Exception as e:
+        print(f"Error in weather_forecast: {str(e)}")  # Debug print
+        raise Exception(f"Failed to get weather data: {str(e)}")

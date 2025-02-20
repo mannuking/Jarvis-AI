@@ -15,13 +15,19 @@ from constants import SCREEN_HEIGHT,SCREEN_WIDTH,GEMINI_API_KEY
 from utils import speak,youtube,search_on_google,search_on_wikipedia,send_email,get_news,weather_forecast,find_my_ip
 from jarvis_button import JarvisButton
 import google.generativeai as genai
+from app_launcher import AppLauncher
+from system_controller import SystemController
+import re
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-2.0-flash-lite-preview-02-05')
 
 class Jarvis(widget.Widget):
     def __init__(self, **kwargs):
         super(Jarvis, self).__init__(**kwargs)
+        # Add new controllers
+        self.app_launcher = AppLauncher()
+        self.system_controller = SystemController()
         self.volume = 0
         self.volume_history = [0,0,0,0,0,0,0]
         self.volume_history_size = 140
@@ -180,7 +186,45 @@ class Jarvis(widget.Widget):
             
     def handle_jarvis_commands(self,query):  
             try:
-                if "how are you" in query:
+                # System controls
+                if "set volume" in query:
+                    match = re.search(r'set volume (?:to )?(\d+)', query)
+                    if match:
+                        level = int(match.group(1))
+                        if self.system_controller.set_volume(level):
+                            speak(f"Volume set to {level} percent")
+                        else:
+                            speak("Sorry, I couldn't change the volume")
+                        
+                elif "set brightness" in query:
+                    match = re.search(r'set brightness (?:to )?(\d+)', query)
+                    if match:
+                        level = int(match.group(1))
+                        if self.system_controller.set_brightness(level):
+                            speak(f"Brightness set to {level} percent")
+                        else:
+                            speak("Sorry, I couldn't change the brightness")
+                        
+                # Application launching
+                elif any(keyword in query for keyword in ['open', 'launch', 'start', 'run']):
+                    # Extract app name by removing command words
+                    app_name = query.lower()
+                    for word in ['open', 'launch', 'start', 'run', 'please', 'can you', 'could you']:
+                        app_name = app_name.replace(word, '')
+                    app_name = app_name.strip()
+                    
+                    print(f"Attempting to launch: {app_name}")
+                    
+                    if self.app_launcher.launch_app(app_name):
+                        speak(f"Opening {app_name}")
+                    else:
+                        # Try force launch as a last resort
+                        if self.app_launcher.force_launch(app_name):
+                            speak(f"Forced launch of {app_name}")
+                        else:
+                            speak(f"Sorry, I couldn't find {app_name}")
+                    
+                elif "how are you" in query:
                     speak("I am absolutely fine sir. What about you")
 
                 elif "open command prompt" in query:
@@ -248,15 +292,35 @@ class Jarvis(widget.Widget):
                     
 
                 elif 'weather' in query:
-                    ip_address = find_my_ip()
-                    speak("tell me the name of your city")
-                    city = input("Enter name of your city")
-                    speak(f"Getting weather report for your city {city}")
-                    weather, temp, feels_like = weather_forecast(city)
-                    speak(f"The current temperature is {temp}, but it feels like {feels_like}")
-                    speak(f"Also, the weather report talks about {weather}")
-                    speak("For your convenience, I am printing it on the screen sir.")
-                    print(f"Description: {weather}\nTemperature: {temp}\nFeels like: {feels_like}")
+                    try:
+                        # Extract city name from the query
+                        city_match = re.search(r'weather\s+(?:in|at|of|for)?\s*(.+)', query.lower())
+                        if city_match:
+                            city = city_match.group(1).strip()
+                            print(f"Fetching weather for city: {city}")
+                            
+                            # Get weather data
+                            weather, temp, feels_like = weather_forecast(city)
+                            
+                            # Create weather text
+                            weather_text = f"Weather in {city}:\n{weather}\nTemp: {temp}\nFeels like: {feels_like}"
+                            
+                            # Schedule both UI updates on the main thread
+                            def update_ui(dt):
+                                if hasattr(self, 'subtitles_input'):
+                                    self.subtitles_input.text = weather_text
+                            
+                            # Use schedule_once for UI update
+                            clock.Clock.schedule_once(update_ui)
+                            
+                            # Speak the weather information
+                            speak(f"The current temperature in {city} is {temp}, but it feels like {feels_like}. The weather is {weather}")
+                        else:
+                            print("No city match found in query:", query)
+                            speak("Please specify a city name when asking about weather")
+                    except Exception as e:
+                        print(f"Weather error in handle_jarvis_commands: {str(e)}")
+                        speak(f"Sorry, I couldn't get the weather information. {str(e)}")
 
                 elif "movie" in query:
                     movies_db = imdb.IMDb()
@@ -316,3 +380,73 @@ class Jarvis(widget.Widget):
                 
             except Exception as e:
                 print(e)
+                
+    def show_city_input(self):
+        # Remove old input widgets if they exist
+        if hasattr(self, 'city_input'):
+            self.remove_widget(self.city_input)
+        if hasattr(self, 'get_weather_button'):
+            self.remove_widget(self.get_weather_button)
+        
+        # Create new input widgets
+        self.city_input = textinput.TextInput(
+            hint_text='Enter city name',
+            font_size=20,
+            background_color=(0.8, 0.8, 0.8, 1),
+            foreground_color=(0, 0, 0, 1),
+            size_hint=(None, None),
+            size=(300, 40),
+            pos=(SCREEN_WIDTH / 2 - 150, SCREEN_HEIGHT / 2 - 20),
+            multiline=False  # Prevent enter key from adding newlines
+        )
+        
+        self.get_weather_button = JarvisButton(
+            text='Get Weather',
+            size_hint=(None, None),
+            size=(150, 40),
+            pos=(SCREEN_WIDTH / 2 + 160, SCREEN_HEIGHT / 2 - 20)
+        )
+        
+        # Bind enter key to submit
+        self.city_input.bind(on_text_validate=self.get_weather_info)
+        self.get_weather_button.bind(on_press=self.get_weather_info)
+        
+        self.add_widget(self.city_input)
+        self.add_widget(self.get_weather_button)
+        
+        # Focus the input using a separate method
+        clock.Clock.schedule_once(self._set_city_input_focus)
+
+    def _set_city_input_focus(self, dt):
+        """Helper method to set focus on city input"""
+        if hasattr(self, 'city_input'):
+            self.city_input.focus = True
+
+    def get_weather_info(self, instance):
+        try:
+            city = self.city_input.text.strip()
+            if not city:
+                speak("Please enter a city name")
+                return
+                
+            weather, temp, feels_like = weather_forecast(city)
+            
+            # Update UI with weather information
+            weather_text = f"Weather in {city}:\n{weather}\nTemp: {temp}°C\nFeels like: {feels_like}°C"
+            self.subtitles_input.text = weather_text
+            
+            # Speak the weather information
+            speak(f"The current temperature in {city} is {temp} degrees, but it feels like {feels_like} degrees. The weather is {weather}")
+            
+        except Exception as e:
+            speak(f"Sorry, I couldn't get the weather information. {str(e)}")
+            print(f"Weather error: {e}")
+        finally:
+            # Clean up input widgets
+            self.remove_widget(self.city_input)
+            self.remove_widget(self.get_weather_button)
+
+    def update_weather_ui(self, weather_text):
+        """Update weather information in the UI"""
+        if hasattr(self, 'subtitles_input'):
+            self.subtitles_input.text = weather_text
