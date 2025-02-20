@@ -90,27 +90,32 @@ class Jarvis(widget.Widget):
             
             
     def run_speech_recognition(self):
-            print('before speech rec obj')
-            r = sr.Recognizer()
-            with sr.Microphone() as source:
-                print("Listening...")
-                audio=r.listen(source) 
-                print("audio recorded")
+        print('before speech rec obj')
+        r = sr.Recognizer()
+        query = "None"  # Initialize query with a default value
+        
+        with sr.Microphone() as source:
+            print("Listening...")
+            audio = r.listen(source) 
+            print("audio recorded")
                 
-            print("after speech rec obj") 
+        print("after speech rec obj") 
+        
+        try:
+            query = r.recognize_google(audio, language="en-in") 
+            print(f'Recognised: {query}')
+            clock.Clock.schedule_once(lambda dt: setattr(self.subtitles_input, 'text', query))
+            self.handle_jarvis_commands(query.lower())
+                            
+        except sr.UnknownValueError:
+            print("Google speech recognition could not understand audio")
+            clock.Clock.schedule_once(lambda dt: setattr(self.subtitles_input, 'text', "Could not understand audio"))
             
-            try:
-                query=r.recognize_google(audio,language="en-in") 
-                print(f'Recognised: {query}')
-                clock.Clock.schedule_once(lambda dt: setattr(self.subtitles_input,'text',query))
-                self.handle_jarvis_commands(query.lower())
-                                
-            except sr.UnknownValueError:
-                print("Google speech recognition could not understand audio")
-                
-            except sr.RequestError as e:
-                print(e) 
-            return query.lower()  
+        except sr.RequestError as e:
+            print(f"Could not request results from speech recognition service; {e}")
+            clock.Clock.schedule_once(lambda dt: setattr(self.subtitles_input, 'text', "Speech service error"))
+        
+        return query.lower()
         
     def update_time(self,dt):
             current_time = time.strftime('TIME\n\t%H:%M:%S')
