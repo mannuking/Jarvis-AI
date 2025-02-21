@@ -13,9 +13,11 @@ import time
 from datetime import datetime
 from decouple import config
 from random import choice
-from const import random_text
-# Remove the relative import and use direct import
-from utils import find_my_ip, search_on_google, search_on_wikipedia, youtube, send_email, get_news, weather_forecast
+from .const import random_text
+# OR
+from .const import random_text  # If const.py is in the GUI directory
+from .utils import find_my_ip, search_on_google, search_on_wikipedia, youtube, send_email, get_news, weather_forecast
+from .app_launcher import AppLauncher  # Import AppLauncher
 
 engine = pyttsx3.init()
 engine.setProperty('volume', 1.5)
@@ -91,34 +93,32 @@ def take_command():
 
 if __name__ == '__main__':
     greet_me()
+    app_launcher = AppLauncher()  # Create AppLauncher instance
     while True:
         if listening:
             query = take_command().lower()
             if "how are you" in query:
                 speak("I am absolutely fine sir. What about you")
-
+            
             elif "open command prompt" in query:
                 speak("Opening command prompt")
-                os.system('start cmd')
+                app_launcher.launch_app("command prompt")
 
             elif "open camera" in query:
                 speak("Opening camera sir")
-                sp.run('start microsoft.windows.camera:', shell=True)
+                app_launcher.launch_app("camera")
 
             elif "open notepad" in query:
                 speak("Opening Notepad for you sir")
-                notepad_path = "C:\\Users\\ASUS\\AppData\\Local\\Microsoft\\WindowsApps\\notepad.exe"
-                os.startfile(notepad_path)
+                app_launcher.launch_app("notepad")
 
             elif "open discord" in query:
                 speak("Opening Discord for you sir")
-                discord_path = "C:\\Users\\ASUS\\AppData\\Local\\Discord\\app-1.0.9028\\Discord.exe"
-                os.startfile(discord_path)
-
+                app_launcher.launch_app("discord")
+            
             elif "open gta" in query:
-                speak("Opening Gta for you sir")
-                gta_path = "D:\\Tanishq\\GTA\\Launcher.exe"
-                os.startfile(gta_path)
+                speak("Opening GTA for you sir")
+                app_launcher.launch_app("gta")
 
             elif 'ip address' in query:
                 ip_address = find_my_ip()
