@@ -15,23 +15,86 @@ from constants import SCREEN_HEIGHT,SCREEN_WIDTH,GEMINI_API_KEY
 from utils import speak,youtube,search_on_google,search_on_wikipedia,send_email,get_news,weather_forecast,find_my_ip
 from jarvis_button import JarvisButton
 import google.generativeai as genai
-from app_launcher import AppLauncher
 from system_controller import SystemController
 import re
+import json
+
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash-lite-preview-02-05')
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 class Jarvis(widget.Widget):
     def __init__(self, **kwargs):
         super(Jarvis, self).__init__(**kwargs)
+        # Load app paths from json
+        try:
+            with open("GUI/app_paths.json", 'r') as f:
+                self.app_paths = json.load(f)
+                # Expand environment variables in paths
+                self.app_paths = {k: os.path.expandvars(v) for k, v in self.app_paths.items()}
+        except FileNotFoundError:
+            print("Warning: app_paths.json not found. Application launching by name might not work.")
+            self.app_paths = {}
+
         # Add new controllers
-        self.app_launcher = AppLauncher()
         self.system_controller = SystemController()
         self.volume = 0
         self.volume_history = [0,0,0,0,0,0,0]
         self.volume_history_size = 140
-      
+
+        self.app_paths = {
+            "edge": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Microsoft Edge.lnk",
+            "forza": "C:\\Users\\jk422\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\ForzaHorizon5.lnk",
+            "word": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+            "contra": "C:\\Users\\jk422\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\ContraOG.lnk",
+            "file explorer": "C:\\Users\\jk422\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\File Explorer.lnk",
+            "mk11": "C:\\Users\\jk422\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\MK11.lnk",
+            "brave": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Brave.lnk",
+            "drawio": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\draw.io.lnk",
+            "sticky notes": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Sticky Notes (new).lnk",
+            "onenote": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\OneNote.lnk",
+            "epic games launcher": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Epic Games Launcher.lnk",
+            "onedrive": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\OneDrive.lnk",
+            "google chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+            "android studio": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Android Studio\\Android Studio.lnk",
+            "anydesk": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\AnyDesk\\AnyDesk.lnk",
+            "nvidia": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\NVIDIA Corporation\\NVIDIA.lnk",
+            "nvidia broadcast": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\NVIDIA Corporation\\NVIDIA Broadcast.lnk",
+            "obs studio": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\OBS Studio\\OBS Studio (64bit).lnk",
+            "valorant": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Riot Games\\VALORANT.lnk",
+            "task manager": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\System Tools\\Task Manager.lnk",
+            "gpuview help": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Windows Kits\\Windows Performance Toolkit\\GPUView Help.lnk",
+            "gpuview": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Windows Kits\\Windows Performance Toolkit\\GPUView.lnk",
+            "windows performance analyzer": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Windows Kits\\Windows Performance Toolkit\\Windows Performance Analyzer.lnk",
+            "windows performance recorder": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Windows Kits\\Windows Performance Toolkit\\Windows Performance Recorder.lnk",
+            "hyper v manager": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Hyper-V Manager.lnk",
+            "vmcreate": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\VMCreate.lnk",
+            "iscsi initiator": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\iSCSI Initiator.lnk",
+            "security configuration management": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Security Configuration Management.lnk",
+            "odbc data sources 32 bit": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\ODBC Data Sources (32-bit).lnk",
+            "odbc data sources 64 bit": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\ODBC Data Sources (64-bit).lnk",
+            "performance monitor": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Performance Monitor.lnk",
+            "print management": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Print Management.lnk",
+            "recovery drive": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\RecoveryDrive.lnk",
+            "registry editor": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Registry Editor.lnk",
+            "resource monitor": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Resource Monitor.lnk",
+            "services": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\services.lnk",
+            "system configuration": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\System Configuration.lnk",
+            "system information": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\System Information.lnk",
+            "task scheduler": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Task Scheduler.lnk",
+            "windows defender firewall": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Windows Defender Firewall with Advanced Security.lnk",
+            "memory diagnostics tool": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Memory Diagnostics Tool.lnk",
+            "component services": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Component Services.lnk",
+            "computer management": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Computer Management.lnk",
+            "dfrgui": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\dfrgui.lnk",
+            "disk cleanup": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Disk Cleanup.lnk",
+            "event viewer": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Administrative Tools\\Event Viewer.lnk",
+            "docker desktop": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\Docker Desktop.lnk",
+            "hidhide configuration client": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\HidHide Configuration Client.lnk",
+            "quick share": "C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Quick Share.lnk",
+            "code": "C:\\Users\\jk422\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe"
+        }
+
         self.min_size = .2 * SCREEN_WIDTH
         self.max_size = .7 * SCREEN_WIDTH
         
@@ -184,131 +247,112 @@ class Jarvis(widget.Widget):
             print(f"Error getting Gemini response: {e}")
             return "I'm sorry, I couldn't process that request."
             
-    def handle_jarvis_commands(self,query):  
-            try:
-                # System controls
-                if "set volume" in query:
-                    match = re.search(r'set volume (?:to )?(\d+)', query)
-                    if match:
-                        level = int(match.group(1))
-                        if self.system_controller.set_volume(level):
-                            speak(f"Volume set to {level} percent")
-                        else:
-                            speak("Sorry, I couldn't change the volume")
-                        
-                elif "set brightness" in query:
-                    match = re.search(r'set brightness (?:to )?(\d+)', query)
-                    if match:
-                        level = int(match.group(1))
-                        if self.system_controller.set_brightness(level):
-                            speak(f"Brightness set to {level} percent")
-                        else:
-                            speak("Sorry, I couldn't change the brightness")
-                        
-                # Application launching
-                elif any(keyword in query for keyword in ['open', 'launch', 'start', 'run']):
-                    # Extract app name by removing command words
-                    app_name = query.lower()
-                    for word in ['open', 'launch', 'start', 'run', 'please', 'can you', 'could you']:
-                        app_name = app_name.replace(word, '')
-                    app_name = app_name.strip()
-                    
-                    print(f"Attempting to launch: {app_name}")
-                    
-                    if self.app_launcher.launch_app(app_name):
-                        speak(f"Opening {app_name}")
-                    else:
-                        # Try force launch as a last resort
-                        if self.app_launcher.force_launch(app_name):
-                            speak(f"Forced launch of {app_name}")
-                        else:
-                            speak(f"Sorry, I couldn't find {app_name}")
-                    
-                elif "how are you" in query:
-                    speak("I am absolutely fine sir. What about you")
-
-                elif "open command prompt" in query:
-                    speak("Opening command prompt")
-                    os.system('start cmd')
-
-                elif "open camera" in query:
-                    speak("Opening camera sir")
-                    sp.run('start microsoft.windows.camera:', shell=True)
-
-                elif "open notepad" in query:
-                    speak("Opening Notepad for you sir")
-                    notepad_path = "C:\\Users\\ASUS\\AppData\\Local\\Microsoft\\WindowsApps\\notepad.exe"
-                    os.startfile(notepad_path)
-
-                elif "open discord" in query:
-                    speak("Opening Discord for you sir")
-                    discord_path = "C:\\Users\\ASUS\\AppData\\Local\\Discord\\app-1.0.9028\\Discord.exe"
-                    os.startfile(discord_path)
-
-                elif "open gta" in query:
-                    speak("Opening Gta for you sir")
-                    gta_path = "D:\\Tanishq\\GTA\\Launcher.exe"
-                    os.startfile(gta_path)
-
-                elif 'ip address' in query:
-                    ip_address = find_my_ip()
-                    speak(
-                        f'Your IP Address is {ip_address}.\n For your convenience, I am printing it on the screen sir.')
-                    print(f'Your IP Address is {ip_address}')
-
-                elif "youtube" in query:
-                    speak("What do you want to play on youtube sir?")
-                    video = self.take_command().lower()
-                    youtube(video)
-
-                elif "search on google" in query:
-                    speak(f"What do you want to search on google")
-                    query = self.take_command().lower()
-                    search_on_google(query)
-
-                elif "search on wikipedia" in query:
-                    speak("what do you want to search on wikipedia sir?")
-                    search = self.take_command().lower()
-                    results = search_on_wikipedia(search)
-                    speak(f"According to wikipedia,{results}")
+    def handle_jarvis_commands(self, query):
+        try:
+            # Application launching - handle this first
+            if any(keyword in query for keyword in ['open', 'launch', 'start', 'run']):
+                # Extract app name by removing command words
+                app_name = query.lower()
+                for word in ['open', 'launch', 'start', 'run', 'please', 'can you', 'could you']:
+                    app_name = app_name.replace(word, '')
+                app_name = app_name.strip()
                 
+                print(f"Attempting to launch: {app_name}")
+                speak(f"Attempting to launch: {app_name}")
 
-                elif "send an email" in query:
-                    speak("On what email address do you want to send sir?. Please enter in the terminal")
-                    receiver_add = input("Email address:")
-                    speak("What should be the subject sir?")
-                    subject = self.take_command().capitalize()
-                    speak("What is the message ?")
-                    message = self.take_command().capitalize()
-                    if send_email(receiver_add, subject, message):
-                        speak("I have sent the email sir")
-                        print("I have sent the email sir")
-                    else:
-                        speak("something went wrong Please check the error log")
-
-                elif "tell me news" in query:
-                    speak(f"I am reading out the latest headline of today,sir")
-                    speak(get_news())
-                    
-
-                elif 'weather' in query:
+                # Try to launch the app
+                app_name = app_name.strip()
+                if app_name in self.app_paths:
                     try:
-                        # Extract city name from the query
-                        city_match = re.search(r'weather\s+(?:in|at|of|for)?\s*(.+)', query.lower())
-                        if city_match:
-                            city = city_match.group(1).strip()
-                            print(f"Fetching weather for city: {city}")
+                        os.startfile(self.app_paths[app_name])
+                        speak(f"Opening {app_name}")
+                    except Exception as e:
+                        print(f"Error launching {app_name}: {e}")
+                        speak(f"Sorry, I couldn't open {app_name}.")
+                else:
+                    speak(f"Sorry, I don't know how to open {app_name}.")
+                return
+
+            # System controls - volume and brightness adjustments
+            elif "set volume" in query:
+                match = re.search(r'set volume (?:to )?(\d+)', query)
+                if match:
+                    level = int(match.group(1))
+                    if self.system_controller.set_volume(level):
+                        speak(f"Volume set to {level} percent")
+                    else:
+                        speak("Sorry, I couldn't change the volume")
+                
+            elif "set brightness" in query:
+                match = re.search(r'set brightness (?:to )?(\d+)', query) # Adjusted regex for flexibility
+                if match:
+                    level = int(match.group(1))
+                    if self.system_controller.set_brightness(level):
+                        speak(f"Brightness set to {level} percent")
+                    else:
+                        speak("Sorry, I couldn't change the brightness")
+
+            # Handling other commands like IP address, YouTube, Google search, etc.
+            elif "how are you" in query:
+                speak("I am absolutely fine sir. What about you")
+
+            elif "ip address" in query:
+                ip_address = find_my_ip()
+                speak(
+                    f'Your IP Address is {ip_address}.\nFor your convenience, I am printing it on the screen sir.')
+                print(f'Your IP Address is {ip_address}')
+
+            # YouTube functionality
+
+            elif "youtube" in query:
+                speak("What do you want to play on youtube sir?")
+                video = self.take_command().lower()
+                youtube(video)
+
+            elif "search on google" in query:
+                speak("What do you want to search on google")
+                search_query = self.take_command().lower()
+                search_on_google(search_query)
+
+            elif "search on wikipedia" in query:
+                speak("what do you want to search on wikipedia sir?")
+                search = self.take_command().lower()
+                results = search_on_wikipedia(search)
+                speak(f"According to wikipedia,{results}")
+
+            elif "send an email" in query:
+                speak("On what email address do you want to send sir?. Please enter in the terminal")
+                receiver_add = input("Email address:")
+                speak("What should be the subject sir?")
+                subject = self.take_command().capitalize()
+                speak("What is the message ?")
+                message = self.take_command().capitalize()
+                if send_email(receiver_add, subject, message):
+                    speak("I have sent the email sir")
+                    print("I have sent the email sir")
+                else:
+                    speak("something went wrong Please check the error log")
+
+            elif "tell me news" in query:
+                speak("I am reading out the latest headline of today,sir")
+                speak(get_news())
+
+            elif 'weather' in query:
+                try:
+                    # Extract city name from query
+                    city_match = re.search(r'weather (?:in|at|for)? (.+)', query)
+                    if city_match:
+                        city = city_match.group(1).strip()
+                        weather_data = weather_forecast(city)
+                        
+                        if weather_data:
+                            temp = weather_data['temp']
+                            feels_like = weather_data['feels_like']
+                            weather = weather_data['weather']
                             
-                            # Get weather data
-                            weather, temp, feels_like = weather_forecast(city)
-                            
-                            # Create weather text
-                            weather_text = f"Weather in {city}:\n{weather}\nTemp: {temp}\nFeels like: {feels_like}"
-                            
-                            # Schedule both UI updates on the main thread
                             def update_ui(dt):
-                                if hasattr(self, 'subtitles_input'):
-                                    self.subtitles_input.text = weather_text
+                                weather_text = f"Weather in {city}:\n{weather}\nTemp: {temp}°C\nFeels like: {feels_like}°C"
+                                self.subtitles_input.text = weather_text
                             
                             # Use schedule_once for UI update
                             clock.Clock.schedule_once(update_ui)
@@ -318,68 +362,67 @@ class Jarvis(widget.Widget):
                         else:
                             print("No city match found in query:", query)
                             speak("Please specify a city name when asking about weather")
-                    except Exception as e:
-                        print(f"Weather error in handle_jarvis_commands: {str(e)}")
-                        speak(f"Sorry, I couldn't get the weather information. {str(e)}")
+                    else:
+                        speak("Please specify a city name when asking about weather")
+                except Exception as e:
+                    print(f"Weather error in handle_jarvis_commands: {str(e)}")
+                    speak(f"Sorry, I couldn't get the weather information. {str(e)}")
 
-                elif "movie" in query:
-                    movies_db = imdb.IMDb()
-                    speak("Please tell me the movie name:")
-                    text = self.take_command()
-                    movies = movies_db.search_movie(text)
-                    speak("searching for" + text)
-                    speak("I found these")
-                    for movie in movies:
-                        title = movie["title"]
-                        year = movie["year"]
-                        speak(f"{title}-{year}")
-                        info = movie.getID()
-                        movie_info = movies_db.get_movie(info)
-                        rating = movie_info["rating"]
-                        cast = movie_info["cast"]
-                        actor = cast[0:5]
-                        plot = movie_info.get('plot outline', 'plot summary not available')
-                        speak(f"{title} was released in {year} has imdb ratings of {rating}.It has a cast of {actor}. "
-                            f"The plot summary of movie is {plot}")
-
-                        print(f"{title} was released in {year} has imdb ratings of {rating}.\n It has a cast of {actor}. \n"
-                            f"The plot summary of movie is {plot}")
-
-
-                elif 'subscribe' in query:
-                    speak(
-                        "Everyone who are watching this video, Please subscribe for more amazing content from error by "
-                        "night. I will show you how to do this")
-                    speak("Firstly Go to youtube")
-                    webbrowser.open("https://www.youtube.com/")
-                    speak("click on the search bar")
-                    pyautogui.moveTo(806, 125, 1)
-                    pyautogui.click(x=806, y=125, clicks=1, interval=0, button='left')
-                    speak("Error by night")
-                    pyautogui.typewrite("Error by night", 0.1)
-                    time.sleep(1)
-                    speak("press enter")
-                    pyautogui.press('enter')
-                    pyautogui.moveTo(971, 314, 1)
-                    speak("Here you will see our channel")
-                    pyautogui.moveTo(1688, 314, 1)
-                    speak("click here to subscribe our channel")
-                    pyautogui.click(x=1688, y=314, clicks=1, interval=0, button='left')
-                    speak("And also Don't forget to press the bell icon")
-                    pyautogui.moveTo(1750, 314, 1)
-                    pyautogui.click(x=1750, y=314, clicks=1, interval=0, button='left')
-                    speak("turn on all notifications")
-                    pyautogui.click(x=1750, y=320, clicks=1, interval=0, button='left')
-            
-                else:
-                    gemini_response = self.get_gemini_response(query)
-                    gemini_response = gemini_response.replace("*","")
-                    if gemini_response and gemini_response != "I'm sorry, I couldn't process that request.":
-                        speak(gemini_response)
-                        print(gemini_response)
+            elif "movie" in query:
+                movies_db = imdb.IMDb()
+                speak("Please tell me the movie name:")
+                text = self.take_command()
+                movies = movies_db.search_movie(text)
                 
-            except Exception as e:
-                print(e)
+                if movies:
+                    speak(f"Searching for {text}")
+                    speak("I found these:")
+                    for movie in movies[:3]:  # Show top 3 results
+                        title = movie['title']
+                        year = movie.get('year', 'Year not available')
+                        speak(f"{title} ({year})")
+                        print(f"{title} ({year})")
+                else:
+                    speak("No movies found with that name")
+
+            elif 'subscribe' in query:
+                speak(
+                    "Everyone who are watching this video, Please subscribe for more amazing content from error by "
+                    "night. I will show you how to do this")
+                speak("Firstly Go to youtube")
+                webbrowser.open("https://www.youtube.com/")
+                speak("click on the search bar")
+                pyautogui.moveTo(806, 125, 1)
+                pyautogui.click(x=806, y=125, clicks=1, interval=0, button='left')
+                speak("type error by night")
+                pyautogui.typewrite("error by night")
+                speak("press enter")
+                pyautogui.press('enter')
+                time.sleep(2)
+                speak("click on channel")
+                pyautogui.moveTo(490, 314, 1)
+                pyautogui.click(x=490, y=314, clicks=1, interval=0, button='left')
+                speak("click on subscribe button")
+                pyautogui.moveTo(1688, 314, 1)
+                speak("click here to subscribe our channel")
+                pyautogui.click(x=1688, y=314, clicks=1, interval=0, button='left')
+                speak("And also Don't forget to press the bell icon")
+                pyautogui.moveTo(1750, 314, 1)
+                pyautogui.click(x=1750, y=314, clicks=1, interval=0, button='left')
+                speak("turn on all notifications")
+                pyautogui.click(x=1750, y=320, clicks=1, interval=0, button='left')
+
+            else:
+                # If no specific command matches, use Gemini for general conversation
+                gemini_response = self.get_gemini_response(query)
+                gemini_response = gemini_response.replace("*","")
+                if gemini_response and gemini_response != "I'm sorry, I couldn't process that request.":
+                    speak(gemini_response)
+                    print(gemini_response)
+
+        except Exception as e:
+            print(f"Error in handle_jarvis_commands: {str(e)}")
+            speak("Sorry, I encountered an error while processing that command")
                 
     def show_city_input(self):
         # Remove old input widgets if they exist

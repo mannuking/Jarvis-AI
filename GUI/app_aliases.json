@@ -1,12 +1,12 @@
 {
-  "chrome": ["google chrome", "google", "browser"],
-  "whatsapp": ["whatsapp messenger", "whatsapp desktop"],
-  "vscode": ["visual studio code", "vs code", "code"],
-  "word": ["microsoft word", "ms word", "winword"],
-  "excel": ["microsoft excel", "ms excel"],
-  "powerpoint": ["microsoft powerpoint", "ms powerpoint", "ppt"],
-  "notepad": ["notes", "text editor"],
-  "cmd": ["command prompt", "terminal", "command line"],
-  "calculator": ["calc"],
-  "task manager": ["taskman", "tasks"]
+    "chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "brave": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+    "vscode": "C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+    "discord": "C:\\Users\\%USERNAME%\\AppData\\Local\\Discord\\Update.exe --processStart Discord.exe",
+    "spotify": "C:\\Users\\%USERNAME%\\AppData\\Roaming\\Spotify\\Spotify.exe",
+    "steam": "C:\\Program Files (x86)\\Steam\\steam.exe",
+    "word": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+    "excel": "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE",
+    "powerpoint": "C:\\Program Files\\Microsoft Office\\root\\Office16\\POWERPNT.EXE",
+    "whatsapp": "C:\\Users\\%USERNAME%\\AppData\\Local\\WhatsApp\\WhatsApp.exe"
 }
